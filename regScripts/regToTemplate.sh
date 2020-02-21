@@ -28,6 +28,6 @@ if [[ !(-f $fixedT1 && -f $movingFA) ]] ; then
 fi
 
 
-outputRoot="reg/${movingSeries}ToMNI/${movingSeries}ToMNI_"
+outputRoot="reg/${movingSeries}ToTemplate/${movingSeries}ToTemplate_"
 
 regScripts/regHelper.sh $movingFA $movingDT $fixedT1 $outputRoot
