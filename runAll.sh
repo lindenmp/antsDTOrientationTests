@@ -10,5 +10,5 @@ ${scriptdir}/nativeDT/dtifit.sh $subject
 
 ${scriptdir}/nativeDT/convertDT.sh $subject
 
-${scriptdir}/regScripts/regToMNI.sh $subject
+${scriptdir}/regScripts/regToTemplate.sh $subject
     
