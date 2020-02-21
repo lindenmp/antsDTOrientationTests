@@ -1,9 +1,12 @@
 #!/bin/bash
 
-for series in axis ortho pitch roll yaw; do 
+subject=$1
 
-  mkdir fsl/$series
+mkdir -p fsl/$subject
 
-  dtifit -k ../nii/${series}/${series}.nii.gz -o fsl/${series}/${series} -m ../nii/${series}/${series}_mean_b0_brain_mask.nii.gz -r ../nii/${series}/${series}.bvec -b ../nii/${series}/${series}.bval --save_tensor
-
-done
+dtifit -k /Users/lindenmp/${subject}/T1w/Diffusion/data.nii.gz \
+	-o fsl/${subject}/${subject} \
+	-m /Users/lindenmp/${subject}/T1w/Diffusion/nodif_brain_mask.nii.gz \
+	-r /Users/lindenmp/${subject}/T1w/Diffusion/bvecs \
+	-b /Users/lindenmp/${subject}/T1w/Diffusion/bvals \
+	--save_tensor
