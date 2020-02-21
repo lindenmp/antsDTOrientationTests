@@ -1,25 +1,14 @@
 #!/bin/bash
 
-# Register FA images to each other
-for fixed in axis ortho pitch roll yaw; do 
-  for moving in axis ortho pitch roll yaw; do 
-    if [[ ! $fixed == $moving ]]; then 
-      regScripts/reg.sh $moving $fixed 
-    fi 
-  done 
-done
+subject=100307
 
-# Register FA to OASIS T1 template
-for moving in axis ortho pitch roll yaw; do
- regScripts/regToOASIS.sh $moving
-done
+scriptdir='/Users/lindenmp/Dropbox/Work/git/antsDTOrientationTests'
+
+${scriptdir}/resliceTemplate.sh
+
+${scriptdir}/nativeDT/dtifit.sh $subject
+
+${scriptdir}/nativeDT/convertDT.sh $subject
+
+${scriptdir}/regScripts/regToMNI.sh $subject
     
-# Register each image to rotated fixed images
-# so there is some actual rotation in physical space 
-#  
-for rotated in pitch roll yaw orthoRoll orthoPitch orthoYaw; do 
-  for moving in axis ortho pitch roll yaw; do
-    regScripts/regWithRotation.sh $moving $rotated
-  done
-done
-
