@@ -50,3 +50,5 @@ Output files are in reg/100307ToMNI:
 100307ToMNI_DTDeformed.nii.gz - DT warped to template
 
 100307ToMNI_DTDeformed.nii.gz - DT warped to template and then reoriented
+
+Note, data not uploaded.
