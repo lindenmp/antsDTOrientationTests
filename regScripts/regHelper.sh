@@ -1,21 +1,23 @@
 #!/bin/bash
 
-function get4DV1() {
+function get4DVecs() {
 
     # fslview does not display 5D NIFTI vectors correctly, requires 4D
     
     dt=$1
-    output=$2
+    vec_label=$2
+    vec_idx=$3
+    output=$4
     
     tmpFileRoot=`basename ${dt%.nii.gz}`
     
-    ${ANTSPATH}ImageMath 3 /tmp/${tmpFileRoot}V1.nii.gz TensorToVector $dt 2
+    ${ANTSPATH}ImageMath 3 /tmp/${tmpFileRoot}${vec_label}.nii.gz TensorToVector $dt $vec_idx
     
     for (( i=0; i<3; i++ )); do
-        ${ANTSPATH}ImageMath 3 /tmp/${tmpFileRoot}V1${i}.nii.gz ExtractVectorComponent /tmp/${tmpFileRoot}V1.nii.gz $i
+        ${ANTSPATH}ImageMath 3 /tmp/${tmpFileRoot}${vec_label}_${i}.nii.gz ExtractVectorComponent /tmp/${tmpFileRoot}${vec_label}.nii.gz $i
     done
     
-    ${ANTSPATH}ImageMath 4 ${output} TimeSeriesAssemble 1 0 /tmp/${tmpFileRoot}V10.nii.gz /tmp/${tmpFileRoot}V11.nii.gz /tmp/${tmpFileRoot}V12.nii.gz 
+    ${ANTSPATH}ImageMath 4 ${output} TimeSeriesAssemble 1 0 /tmp/${tmpFileRoot}${vec_label}_0.nii.gz /tmp/${tmpFileRoot}${vec_label}_1.nii.gz /tmp/${tmpFileRoot}${vec_label}_2.nii.gz 
     
 }
 
@@ -39,6 +41,11 @@ movingDT=$2
 fixed=$3
 outputRoot=$4
 
+echo ${moving}
+echo ${movingDT}
+echo ${fixed}
+echo ${outputRoot}
+
 initialTransformOpt=""
 
 if [[ $# -gt 4 ]]; then
@@ -51,25 +58,24 @@ if [[ ! -d $outputDir ]]; then
     mkdir -p ${outputDir}
 fi
 
+# 1) run ANTs registration
+${ANTSPATH}antsRegistrationSyNQuick.sh -p f -f $fixed -m $moving -t s -o $outputRoot $initialTransformOpt
 
+# 2) compose a single warp
+${ANTSPATH}antsApplyTransforms -d 3 -i $moving -r $fixed -t ${outputRoot}1Warp.nii.gz -t ${outputRoot}0GenericAffine.mat -o [ ${outputRoot}combinedWarp.nii.gz , 1 ]
 
-${ANTSPATH}antsRegistrationSyNQuick.sh -p f -f $fixed -m $moving -t r -o $outputRoot $initialTransformOpt
+# 3) move DT to fixed
+${ANTSPATH}antsApplyTransforms -d 3 -e 2 -i $movingDT -r $fixed -t ${outputRoot}combinedWarp.nii.gz -o ${outputRoot}DTDeformed.nii.gz
 
-# for convenience, copy fixed also
-cp $fixed ${outputDir}/fixed.nii.gz
+# 4) reorient warped DT
+${ANTSPATH}ReorientTensorImage 3 ${outputRoot}DTDeformed.nii.gz ${outputRoot}DTReorientedWarp.nii.gz ${outputRoot}combinedWarp.nii.gz
 
-# Now warp tensors and get V1 in FSL vector format
-${ANTSPATH}antsApplyTransforms -d 3 -e 2 -r $fixed -t ${outputRoot}0GenericAffine.mat -i $movingDT -o ${outputRoot}DTDeformed.nii.gz
+# 5) Get vecs
+get4DVecs ${outputRoot}DTReorientedWarp.nii.gz V1 2 ${outputRoot}V1Deformed.nii.gz
+get4DVecs ${outputRoot}DTReorientedWarp.nii.gz V2 1 ${outputRoot}V2Deformed.nii.gz
+get4DVecs ${outputRoot}DTReorientedWarp.nii.gz V3 0 ${outputRoot}V3Deformed.nii.gz
 
-get4DV1 ${outputRoot}DTDeformed.nii.gz ${outputRoot}V1Deformed.nii.gz
-
-${ANTSPATH}ReorientTensorImage 3 ${outputRoot}DTDeformed.nii.gz ${outputRoot}DTReorientedMat.nii.gz ${outputRoot}0GenericAffine.mat
-
-get4DV1 ${outputRoot}DTReorientedMat.nii.gz ${outputRoot}V1ReorientedMat.nii.gz
-
-# Get a warp field 
-${ANTSPATH}antsApplyTransforms -d 3 -r $fixed -t ${outputRoot}0GenericAffine.mat -i $moving -o [${outputRoot}0Warp.nii.gz, 1]
-
-${ANTSPATH}ReorientTensorImage 3 ${outputRoot}DTDeformed.nii.gz ${outputRoot}DTReorientedWarp.nii.gz ${outputRoot}0Warp.nii.gz
-
-get4DV1 ${outputRoot}DTReorientedWarp.nii.gz ${outputRoot}V1ReorientedWarp.nii.gz
+# 5) Get eigenvals
+${ANTSPATH}ImageMath 3 ${outputRoot}L1Deformed.nii.gz TensorEigenvalue ${outputRoot}DTReorientedWarp.nii.gz 2
+${ANTSPATH}ImageMath 3 ${outputRoot}L2Deformed.nii.gz TensorEigenvalue ${outputRoot}DTReorientedWarp.nii.gz 1
+${ANTSPATH}ImageMath 3 ${outputRoot}L3Deformed.nii.gz TensorEigenvalue ${outputRoot}DTReorientedWarp.nii.gz 0
