@@ -35,20 +35,20 @@ The scripts to do this are in nativeDT/
 Non-linear registration to template is performed using FA image and DT is moved and reoriented.
 Eigenvectors and eigenvalues are extracted from DT.
 
-    regToMNI.sh
+    regToTemplate.sh
 	    regHelper.sh
 
 
 ## Registration output
 
-Output files are in reg/100307ToMNI:
+Output files are in reg/100307ToTemplate:
 
-100307ToMNI_{V1,V2,V3}Deformed.nii.gz - eigenvectors
+100307ToTemplate_{V1,V2,V3}Deformed.nii.gz - eigenvectors
 
-100307ToMNI_{L1,L2,L3}Deformed.nii.gz - eigenvalues
+100307ToTemplate_{L1,L2,L3}Deformed.nii.gz - eigenvalues
 
-100307ToMNI_DTDeformed.nii.gz - DT warped to template
+100307ToTemplate_DTDeformed.nii.gz - DT warped to template
 
-100307ToMNI_DTDeformed.nii.gz - DT warped to template and then reoriented
+100307ToTemplate_DTDeformed.nii.gz - DT warped to template and then reoriented
 
 Note, data not uploaded.
